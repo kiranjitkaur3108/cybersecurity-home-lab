@@ -275,9 +275,232 @@ A test TCP service will be configured on Ubuntu later in this lab so that Nmap c
 
 ---
 
-## 7. Key Learning
+---
 
-This lab helped connect networking theory with practical packet analysis.
+## 7. TCP Service Setup with Netcat
+
+After the initial Nmap scan showed that the default TCP ports were closed, I configured a temporary TCP listener on Ubuntu using Netcat.
+
+On Ubuntu, I ran:
+
+```bash
+nc -lvnp 12345
+```
+
+The listener started on TCP port `12345`.
+
+```text
+Listening on 0.0.0.0 12345
+```
+<img width="274" height="63" alt="image" src="https://github.com/user-attachments/assets/4a084e3c-087e-470f-9dfd-c6d12afa583d" />
+
+
+This allowed Kali Linux to connect to Ubuntu through TCP port `12345`.
+
+---
+
+## 8. Nmap Detection of the Open TCP Port
+
+With the Netcat listener running on Ubuntu, I performed a targeted Nmap service/version scan from Kali:
+
+```bash
+nmap -sV -p 12345 192.168.56.10
+```
+
+Nmap detected the port as open:
+
+```text
+PORT      STATE SERVICE VERSION
+12345/tcp open  netbus?
+```
+
+The important result was:
+
+```text
+12345/tcp → TCP port 12345
+open      → A service is listening on the port
+```
+
+Nmap identified the service as `netbus?`, but the `?` indicates that this was only Nmap's best guess.
+
+The actual service running in this lab was a **Netcat listener**.
+
+
+
+### Nmap Evidence
+
+<img width="1850" height="896" alt="image" src="https://github.com/user-attachments/assets/f36bcef8-4067-4e82-9d92-be6ae02f8902" />
+
+
+---
+
+## 9. TCP Connection from Kali to Ubuntu
+
+After confirming that TCP port `12345` was open, I connected from Kali Linux to the Netcat listener running on Ubuntu.
+
+From Kali, I ran:
+
+```bash
+nc 192.168.56.10 12345
+```
+
+I then sent the following message:
+
+```text
+Hello from Kali
+```
+
+The message was successfully received by Ubuntu.
+
+This confirmed that TCP communication between Kali Linux and Ubuntu was working successfully.
+<img width="316" height="250" alt="image" src="https://github.com/user-attachments/assets/b764d0f0-52ba-40b6-9375-1aea3adaaa1f" />
+
+
+### Communication Flow
+
+```text
+Kali
+192.168.56.11:36564
+        |
+        | TCP
+        ↓
+Ubuntu
+192.168.56.10:12345
+        |
+        ↓
+Netcat Listener
+```
+
+The source port `36564` was a temporary client port used by Kali, while `12345` was the destination port where the Netcat listener was running on Ubuntu.
+
+---
+
+## 10. TCP Three-Way Handshake in Wireshark
+
+I captured the TCP connection using Wireshark with the following display filter:
+
+```text
+tcp.port == 12345
+```
+
+The capture showed the TCP three-way handshake:
+
+```text
+Kali → Ubuntu
+SYN
+
+Ubuntu → Kali
+SYN, ACK
+
+Kali → Ubuntu
+ACK
+```
+
+
+
+### TCP Three-Way Handshake
+
+```text
+Kali                         Ubuntu
+  |                            |
+  | -------- SYN ------------> |
+  |                            |
+  | <----- SYN, ACK ---------- |
+  |                            |
+  | -------- ACK ------------> |
+  |                            |
+  |    Connection Established  |
+```
+
+The three-way handshake establishes the TCP connection before application data is transmitted.
+
+### Wireshark Evidence
+
+<img width="481" height="384" alt="image" src="https://github.com/user-attachments/assets/a6fdbd1f-46c5-4b9b-89a3-0b66916f7d05" />
+
+
+---
+
+## 11. TCP Data Transmission
+
+After the TCP connection was established, Kali sent application data to Ubuntu.
+
+The message:
+
+```text
+Hello from Kali
+```
+
+was successfully received by Ubuntu.
+
+The Wireshark capture showed:
+
+```text
+Kali → Ubuntu
+36564 → 12345
+PSH, ACK
+```
+
+Ubuntu then acknowledged the received data:
+
+```text
+Ubuntu → Kali
+12345 → 36564
+ACK
+```
+
+This demonstrated how TCP uses acknowledgements to provide reliable data transmission.
+
+### TCP Communication
+
+```text
+192.168.56.11:36564
+        |
+        | TCP
+        | "Hello from Kali"
+        ↓
+192.168.56.10:12345
+```
+
+
+
+## 12. Troubleshooting
+
+During the lab, an initial attempt to connect to port `12345` resulted in:
+
+```text
+Connection refused
+```
+
+This occurred because the Netcat listener was not running at that time.
+
+I started the listener again on Ubuntu:
+
+```bash
+nc -lvnp 12345
+```
+
+I then connected from Kali:
+
+```bash
+nc 192.168.56.10 12345
+```
+
+The connection was successfully established, and:
+
+```text
+Hello from Kali
+```
+
+was received by Ubuntu.
+
+This troubleshooting process demonstrated the importance of having a service actively listening on a TCP port before a client can establish a connection.
+
+---
+
+## 13. Key Learning
+
+This lab helped connect networking theory with practical packet analysis and basic service discovery.
 
 ### Concepts Practiced
 
@@ -291,7 +514,11 @@ This lab helped connect networking theory with practical packet analysis.
 - Wireshark
 - Nmap
 - TCP ports
+- TCP three-way handshake
+- TCP data transmission
 - Service discovery
+- Client-server communication
+- Netcat
 
 One of the main concepts demonstrated was:
 
@@ -307,9 +534,7 @@ Identifies a network service/application
 Protocol
      ↓
 Defines how communication takes place
-```
 
----
 
 ## 8. Troubleshooting
 
@@ -325,9 +550,53 @@ and generated fresh ping traffic to isolate the ICMP packets.
 
 This made it easier to identify the Echo Request and Echo Reply packets.
 
+During the initial Nmap scan, the Ubuntu host was reachable, but the default 1,000 TCP ports were closed.
+
+To practice service discovery, I created a temporary TCP service on Ubuntu using Netcat:
+
+```bash
+nc -lvnp 12345
+```
+
+I then scanned the port from Kali using:
+
+```bash
+nmap -sV -p 12345 192.168.56.10
+```
+
+Nmap detected port `12345/tcp` as open.
+
+The first attempt to connect to the Netcat service returned:
+
+```text
+Connection refused
+```
+
+This happened because the Netcat listener was not running at that moment.
+
+After restarting the listener:
+
+```bash
+nc -lvnp 12345
+```
+
+I successfully connected from Kali:
+
+```bash
+nc 192.168.56.10 12345
+```
+
+I then sent:
+
+```text
+Hello from Kali
+```
+
+and successfully received the message on Ubuntu.
+
 ---
 
-## 9. Commands Practiced
+## 14. Commands Practiced
 
 ### Check network configuration
 
@@ -347,27 +616,85 @@ ping -c 5 192.168.56.10
 nmap -sV 192.168.56.10
 ```
 
+### Start a TCP service using Netcat
+
+```bash
+nc -lvnp 12345
+```
+
+### Scan the TCP port
+
+```bash
+nmap -sV -p 12345 192.168.56.10
+```
+
+### Connect to the TCP service from Kali
+
+```bash
+nc 192.168.56.10 12345
+```
+
+### Wireshark ICMP filter
+
+```text
+icmp
+```
+
+### Wireshark TCP filter
+
+```text
+tcp.port == 12345
+```
+
 ---
 
-## 10. Evidence
+## 15. Evidence
 
-The following screenshots has been added as evidence for this lab:
+The following screenshots have been added as evidence for this lab:
 
 - VirtualBox Internal Network configuration
 - Kali and Ubuntu IP addresses
 - Successful ping between Kali and Ubuntu
 - Wireshark ICMP packet capture
-- Nmap service/version scan
+- ICMP Echo Request packet details
+- ICMP Echo Reply packet details
+- Initial Nmap service/version scan
+- Netcat TCP service running on Ubuntu
+- Nmap detection of TCP port `12345`
+- Successful TCP connection between Kali and Ubuntu
+- Wireshark TCP three-way handshake
+- Wireshark TCP data transmission
 
 ---
 
-## 11. What I Learned
+## 16. What I Learned
 
-Through this lab, I moved from understanding networking concepts theoretically to observing real network traffic.
+Through this lab, I moved from understanding networking concepts theoretically to observing real network traffic and basic service discovery.
 
 I verified communication between Kali Linux and Ubuntu using ICMP and used Wireshark to inspect the packets generated by the `ping` command.
 
+I learned that an ICMP Echo Request is sent from the source host to the destination host, and the destination responds with an ICMP Echo Reply.
+
 I also performed my first Nmap service/version scan and learned that network scanning can be used to identify available services and open ports on a host.
+
+To understand TCP communication, I created a temporary TCP service using Netcat on Ubuntu and connected to it from Kali.
+
+I captured the TCP communication in Wireshark and observed the TCP three-way handshake:
+
+```text
+Kali → Ubuntu
+SYN
+     ↓
+Ubuntu → Kali
+SYN + ACK
+     ↓
+Kali → Ubuntu
+ACK
+     ↓
+TCP Connection Established
+```
+
+After the connection was established, I sent data from Kali to Ubuntu and observed the TCP data transmission in Wireshark.
 
 The lab reinforced the relationship between:
 
@@ -385,12 +712,58 @@ Service
 
 ---
 
-##  Next Steps
+## 17. Lab 1 Final Status
 
-- Configure a test TCP service on Ubuntu
-- Scan the service from Kali using Nmap
-- Perform service/version detection
-- Capture TCP traffic in Wireshark
-- Document the final Nmap results
-- Complete Lab 1
-- Begin Week 2 networking labs
+### Completed
+
+- [x] Kali Linux VM configured
+- [x] Ubuntu VM configured
+- [x] Internal Network configured
+- [x] Kali and Ubuntu connected to the same Internal Network
+- [x] IP addresses verified
+- [x] Connectivity tested using `ping`
+- [x] ICMP traffic captured in Wireshark
+- [x] ICMP Echo Request analyzed
+- [x] ICMP Echo Reply analyzed
+- [x] Initial Nmap scan completed
+- [x] Test TCP service created using Netcat
+- [x] TCP port `12345` scanned using Nmap
+- [x] Open TCP port identified
+- [x] Service/version detection performed
+- [x] TCP connection established from Kali to Ubuntu
+- [x] TCP traffic captured in Wireshark
+- [x] TCP three-way handshake analyzed
+- [x] TCP data transmission observed
+- [x] Troubleshooting documented
+- [x] Lab findings documented
+
+---
+
+## Next Steps
+
+Lab 1 is now complete.
+
+The next phase is **Week 2 — Networking Deep Dive**.
+
+Planned topics:
+
+- DNS
+- DHCP
+- HTTP/HTTPS
+- SSH
+- VPN
+- Firewalls
+- NAT
+- VLANs
+- Ports and services
+
+The Week 2 hands-on labs will include:
+
+- Configure DHCP on Ubuntu
+- Capture the DHCP process in Wireshark
+- Configure UFW firewall rules
+- Test open and blocked ports using Nmap
+- Configure SSH on Ubuntu
+- Connect to Ubuntu from Kali using SSH
+- Capture and analyze SSH traffic in Wireshark
+- Document the results in **Lab 2: Firewall + SSH Configuration**
