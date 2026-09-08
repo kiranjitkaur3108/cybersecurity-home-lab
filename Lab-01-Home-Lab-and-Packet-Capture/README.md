@@ -32,12 +32,16 @@ The main objectives of this lab were:
 ```text
 192.168.56.10/24
 ```
+<img width="466" height="325" alt="image" src="https://github.com/user-attachments/assets/ad7e0047-bd1e-49fa-a1b9-5dcf4410c4ea" />
+
 
 **Kali Linux:**
 
 ```text
 192.168.56.11/24
 ```
+<img width="312" height="196" alt="image" src="https://github.com/user-attachments/assets/e6477cff-7222-4b58-8987-4a8fff33cc45" />
+
 
 Both machines were configured on the same VirtualBox Internal Network, allowing them to communicate directly with each other.
 
@@ -48,6 +52,11 @@ Both machines were configured on the same VirtualBox Internal Network, allowing 
 I configured Kali Linux and Ubuntu to use a VirtualBox Internal Network.
 
 The purpose of using an Internal Network was to create an isolated environment where the virtual machines could communicate with each other without relying on the external network.
+
+
+<img width="1190" height="773" alt="ubuntu configuration" src="https://github.com/user-attachments/assets/929f43d4-3e90-4cce-b28c-5b09f74b5e94" />
+<img width="1181" height="788" alt="kali configuartion" src="https://github.com/user-attachments/assets/c7f8d2cb-aa16-418d-af19-11318a828e9d" />
+
 
 ### Network Topology
 
@@ -80,6 +89,8 @@ ping -c 5 192.168.56.10
 5 packets received
 0% packet loss
 ```
+<img width="274" height="133" alt="image" src="https://github.com/user-attachments/assets/8e3bc68d-3918-40bb-a4d3-5957725ccafb" />
+
 
 This confirmed successful network connectivity between Kali Linux and Ubuntu.
 
@@ -121,6 +132,9 @@ icmp
 
 This allowed me to isolate ICMP packets from other network traffic.
 
+<img width="481" height="376" alt="image" src="https://github.com/user-attachments/assets/50eab874-0cff-4f13-9a73-e80092f593de" />
+
+
 ---
 
 ## 4. ICMP Packet Analysis
@@ -135,6 +149,7 @@ ICMP Echo Request
 Type: 8
 Code: 0
 ```
+<img width="394" height="229" alt="image" src="https://github.com/user-attachments/assets/393a6d07-54bf-4d9d-bb09-886dcb4148d3" />
 
 ### Echo Reply
 
@@ -144,6 +159,7 @@ ICMP Echo Reply
 Type: 0
 Code: 0
 ```
+<img width="394" height="240" alt="image" src="https://github.com/user-attachments/assets/fbd392fe-4a40-41a9-8823-db43c01438b3" />
 
 The IPv4 header allowed me to observe the source and destination IP addresses.
 
@@ -153,6 +169,8 @@ For example, the reply packet contained:
 Source:      192.168.56.10
 Destination: 192.168.56.11
 ```
+<img width="381" height="279" alt="image" src="https://github.com/user-attachments/assets/2008ea5f-0c77-4dcc-8c84-ce944804d53d" />
+
 
 ### Important ICMP Types
 
@@ -178,6 +196,8 @@ ICMP
 ### Ethernet
 
 The Ethernet layer contains information used for communication on the local network, including MAC addresses.
+<img width="397" height="175" alt="image" src="https://github.com/user-attachments/assets/94b07895-6d56-4c25-a232-891ecec95812" />
+
 
 ### IPv4
 
@@ -192,12 +212,16 @@ In this lab:
 Kali:   192.168.56.11
 Ubuntu: 192.168.56.10
 ```
+<img width="399" height="297" alt="image" src="https://github.com/user-attachments/assets/fe543305-0a30-4ce9-a74d-c445f862c7c1" />
+
 
 ### ICMP
 
 ICMP was used by the `ping` command to test connectivity.
 
 The request and response verified that the two virtual machines could communicate successfully.
+<img width="402" height="222" alt="image" src="https://github.com/user-attachments/assets/dce99c3c-d269-4c8f-b8ac-c009321678be" />
+
 
 ---
 
@@ -228,6 +252,8 @@ The initial result was approximately:
 1000 closed
 ```
 
+
+
 No open services were detected in the initial scan.
 
 ### What does `-sV` mean?
@@ -242,6 +268,10 @@ Nmap attempts to determine:
 - The version of the detected service when possible
 
 A test TCP service will be configured on Ubuntu later in this lab so that Nmap can detect an open port.
+<img width="704" height="326" alt="Screenshot 2026-09-08 164847" src="https://github.com/user-attachments/assets/bbef8edc-1922-4e7f-a1c4-7910e479efa7" />
+
+
+
 
 ---
 
@@ -321,7 +351,7 @@ nmap -sV 192.168.56.10
 
 ## 10. Evidence
 
-The following screenshots will be added as evidence for this lab:
+The following screenshots has been added as evidence for this lab:
 
 - VirtualBox Internal Network configuration
 - Kali and Ubuntu IP addresses
@@ -355,7 +385,7 @@ Service
 
 ---
 
-## 🔜 Next Steps
+##  Next Steps
 
 - Configure a test TCP service on Ubuntu
 - Scan the service from Kali using Nmap
